@@ -41,31 +41,14 @@ def init_db() -> None:
                 error_message TEXT
             );
 
-            CREATE TABLE IF NOT EXISTS steam_popular_current (
+            CREATE TABLE IF NOT EXISTS game_catalog_current (
                 app_id INTEGER PRIMARY KEY,
                 rank_index INTEGER NOT NULL,
                 name TEXT NOT NULL,
-                release_date TEXT,
-                discount_text TEXT,
-                final_price TEXT,
-                review_summary TEXT,
                 platforms TEXT,
                 source_url TEXT NOT NULL,
-                scraped_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS steam_app_details_current (
-                app_id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                is_free INTEGER NOT NULL,
-                developers TEXT,
-                publishers TEXT,
-                genres TEXT,
-                categories TEXT,
-                supported_languages TEXT,
-                short_description TEXT,
                 header_image TEXT,
-                detail_url TEXT,
+                source_site TEXT,
                 scraped_at TEXT NOT NULL
             );
 
@@ -94,3 +77,30 @@ def init_db() -> None:
             );
             """
         )
+        _migrate_legacy_game_catalog(conn)
+        _ensure_column(conn, "game_catalog_current", "header_image", "TEXT")
+        _ensure_column(conn, "game_catalog_current", "source_site", "TEXT")
+
+
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, column_type: str) -> None:
+    existing_columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
+    if column not in existing_columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {column_type}")
+
+
+def _migrate_legacy_game_catalog(conn: sqlite3.Connection) -> None:
+    tables = {row["name"] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    if "steam_popular_current" not in tables:
+        return
+    current_count = conn.execute("SELECT COUNT(*) FROM game_catalog_current").fetchone()[0]
+    if current_count == 0:
+        conn.execute(
+            """
+            INSERT INTO game_catalog_current (
+                app_id, rank_index, name, platforms, source_url, scraped_at
+            )
+            SELECT app_id, rank_index, name, platforms, source_url, scraped_at
+            FROM steam_popular_current
+            """
+        )
+    conn.execute("DROP TABLE steam_popular_current")

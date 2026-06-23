@@ -28,8 +28,7 @@ function formatDate(value) {
 
 function renderMetrics(metrics) {
   const cards = [
-    ["热门游戏", metrics.steam_popular_count, "当前数据库游戏条目"],
-    ["详情记录", metrics.steam_detail_count, "已补充详情数量"],
+    ["热门游戏", metrics.game_count, "当前数据库游戏条目"],
     ["B站分区", metrics.bilibili_area_count, "直播热度数据"],
     ["热度峰值", formatNumber(metrics.last_bilibili_peak), "当前最高在线"],
   ];
@@ -93,9 +92,9 @@ function renderHotGames(games) {
             </div>
             <p class="description">${escapeHtml(game.short_description || "暂无简介")}</p>
             <div class="meta-row">
-              <span>${escapeHtml(game.final_price || "暂无价格")}</span>
-              <span>${escapeHtml(game.discount_text || "无折扣")}</span>
-              <span>${escapeHtml(game.genres || "暂无类型")}</span>
+              <span>${escapeHtml(game.source_site || "静态游戏目录")}</span>
+              <span>${escapeHtml(game.platforms || "PC")}</span>
+              <span>${escapeHtml(formatDate(game.scraped_at))}</span>
             </div>
             <div class="card-actions">
               <button type="button" class="link-btn" data-game="${escapeHtml(game.name)}">查攻略</button>
@@ -142,9 +141,9 @@ function renderResult(payload) {
         <h2>${escapeHtml(game.name)}</h2>
         <p class="description">${escapeHtml(game.short_description)}</p>
         <div class="meta-row">
-          <span>价格：${escapeHtml(game.final_price)}</span>
-          <span>发行：${escapeHtml(game.release_date || "暂无")}</span>
-          <span>类型：${escapeHtml(game.genres)}</span>
+          <span>来源：${escapeHtml(game.source_site || "静态游戏目录")}</span>
+          <span>平台：${escapeHtml(game.platforms || "PC")}</span>
+          <span>采集：${escapeHtml(formatDate(game.scraped_at))}</span>
         </div>
         <div class="card-actions">
           <a href="${escapeHtml(game.detail_url || game.source_url)}" target="_blank" rel="noreferrer">打开来源页面</a>
@@ -191,7 +190,7 @@ async function loadDashboard() {
   const data = await response.json();
   renderMetrics(data.metrics);
   renderRuns(data.source_runs);
-  renderHotGames(data.steam_games);
+  renderHotGames(data.games || data.steam_games || []);
   renderBilibili(data.bilibili_areas);
   document.getElementById("generated-at").textContent = `数据库生成时间：${formatDate(data.generated_at)}`;
 }

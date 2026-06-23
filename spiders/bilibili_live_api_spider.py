@@ -1,12 +1,23 @@
 from __future__ import annotations
 
+import time
+import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 
 import requests
 
-from ..cleaning import filter_bilibili_live
-from ..config import GAME_PARENT_AREA_IDS, MAX_WORKERS, SOURCE_TIMEOUT_SECONDS
+try:
+    from spiders.bootstrap import ensure_project_root_on_path
+except ModuleNotFoundError:
+    from bootstrap import ensure_project_root_on_path
+
+
+ensure_project_root_on_path()
+
+from app.cleaning import filter_bilibili_live
+from app.config import DEFAULT_TARGET_RECORDS, GAME_PARENT_AREA_IDS, MAX_WORKERS, SOURCE_TIMEOUT_SECONDS
+from spiders.common import write_dataset
 
 
 AREA_LIST_URL = "https://api.live.bilibili.com/xlive/web-interface/v1/index/getWebAreaList"
@@ -34,13 +45,11 @@ class BilibiliLiveArea:
     room_url: str
 
 
-def _session() -> requests.Session:
-    session = requests.Session()
-    session.headers.update(HEADERS)
-    return session
-
-
-def fetch_live_rankings(limit_per_area: int = 1, limit: int | None = None, workers: int = 4) -> list[BilibiliLiveArea]:
+def fetch_live_rankings(
+    limit_per_area: int = 1,
+    limit: int | None = None,
+    workers: int = MAX_WORKERS,
+) -> list[BilibiliLiveArea]:
     session = _session()
     area_response = session.get(
         AREA_LIST_URL,
@@ -87,6 +96,30 @@ def fetch_live_rankings(limit_per_area: int = 1, limit: int | None = None, worke
     return [BilibiliLiveArea(**record) for record in raw_records]
 
 
+def main() -> None:
+    args = _parse_args("Bilibili live API spider")
+    started_at = time.perf_counter()
+    raw_records = [
+        item.__dict__
+        for item in fetch_live_rankings(limit_per_area=8, limit=args.limit, workers=args.workers)
+    ]
+    cleaned_records = filter_bilibili_live(raw_records, limit=args.limit)
+    write_dataset("bilibili_api_live", raw_records, cleaned_records, started_at)
+
+
+def _parse_args(description: str) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--limit", type=int, default=DEFAULT_TARGET_RECORDS, help="target record count")
+    parser.add_argument("--workers", type=int, default=MAX_WORKERS, help="parallel request workers")
+    return parser.parse_args()
+
+
+def _session() -> requests.Session:
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    return session
+
+
 def _fetch_room_page(parent_id: int, parent_name: str, area_id: int, area_name: str, limit_per_area: int) -> list[dict]:
     response = _session().get(
         ROOM_LIST_URL,
@@ -122,3 +155,7 @@ def _fetch_room_page(parent_id: int, parent_name: str, area_id: int, area_name: 
             }
         )
     return records
+
+
+if __name__ == "__main__":
+    main()

@@ -6,10 +6,11 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .cleaning import filter_bilibili_live, filter_static_games
-from .config import CLEANED_DATA_DIR, DEFAULT_TARGET_RECORDS, RAW_DATA_DIR
-from .crawlers.bilibili_live import fetch_live_rankings
-from .crawlers.gamersky_static import fetch_static_games
+from .config import CLEANED_DATA_DIR, DEFAULT_TARGET_RECORDS, MAX_WORKERS, RAW_DATA_DIR
 from .utils import utc_now_iso
+from spiders.bilibili_dynamic_live_spider import fetch_dynamic_live_rooms
+from spiders.bilibili_live_api_spider import fetch_live_rankings
+from spiders.static_game_spider import fetch_static_games
 
 
 DATASET_SPECS = {
@@ -113,11 +114,11 @@ def _fetch_static(limit: int) -> list[dict]:
 
 
 def _fetch_api(limit: int) -> list[dict]:
-    return [asdict(item) for item in fetch_live_rankings(limit_per_area=8, limit=limit)]
+    return [asdict(item) for item in fetch_live_rankings(limit_per_area=8, limit=limit, workers=MAX_WORKERS)]
 
 
 def _fetch_dynamic(limit: int) -> list[dict]:
-    return [asdict(item) for item in fetch_live_rankings(limit_per_area=8, limit=limit)]
+    return fetch_dynamic_live_rooms(limit, workers=MAX_WORKERS)
 
 
 def _clean_static(records: list[dict], limit: int) -> list[dict]:

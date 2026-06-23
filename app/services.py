@@ -5,9 +5,9 @@ from dataclasses import asdict
 
 from .batch_crawl import load_cleaned_dataset, refresh_batch_sources
 from .config import DEFAULT_TARGET_RECORDS
-from .crawlers.bilibili_video import fetch_strategy_videos, fetch_strategy_videos_bulk
-from .repository import begin_run, finish_run, replace_bilibili_live, replace_steam_popular
+from .repository import begin_run, finish_run, replace_bilibili_live, replace_game_catalog
 from .utils import utc_now_iso
+from spiders.bilibili_strategy_video_spider import fetch_strategy_videos
 
 
 class CrawlService:
@@ -34,7 +34,7 @@ class CrawlService:
                     start=1,
                 )
             ]
-            replace_steam_popular(static_records)
+            replace_game_catalog(static_records)
             finish_run(static_run_id, "success", len(static_records))
         except Exception as exc:
             finish_run(static_run_id, "failed", 0, str(exc))
@@ -52,13 +52,6 @@ def find_strategy_videos(game_name: str) -> list[dict]:
     return [
         {**asdict(item), "scraped_at": utc_now_iso()}
         for item in fetch_strategy_videos(game_name)
-    ]
-
-
-def find_strategy_videos_for_games(game_names: list[str], limit: int = DEFAULT_TARGET_RECORDS) -> list[dict]:
-    return [
-        {**asdict(item), "scraped_at": utc_now_iso()}
-        for item in fetch_strategy_videos_bulk(game_names, limit=limit)
     ]
 
 

@@ -61,7 +61,7 @@ def dedupe_records(
     return cleaned
 
 
-def filter_steam_popular(records: Iterable[dict], limit: int | None = None) -> list[dict]:
+def filter_game_catalog(records: Iterable[dict], limit: int | None = None) -> list[dict]:
     return dedupe_records(records, ["app_id"], ["app_id", "name", "source_url"], limit)
 
 
@@ -77,10 +77,6 @@ def filter_static_games(records: Iterable[dict], limit: int | None = None) -> li
         if limit and len(cleaned) >= limit:
             break
     return cleaned
-
-
-def filter_steam_details(records: Iterable[dict], limit: int | None = None) -> list[dict]:
-    return dedupe_records(records, ["app_id"], ["app_id", "name", "detail_url"], limit)
 
 
 def filter_videos(records: Iterable[dict], limit: int | None = None) -> list[dict]:

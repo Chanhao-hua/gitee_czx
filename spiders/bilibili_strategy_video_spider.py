@@ -6,8 +6,8 @@ from urllib.parse import quote_plus
 
 import requests
 
-from ..cleaning import filter_videos
-from ..config import DEFAULT_TARGET_RECORDS, MAX_WORKERS, SOURCE_TIMEOUT_SECONDS
+from app.cleaning import filter_videos
+from app.config import DEFAULT_TARGET_RECORDS, MAX_WORKERS, SOURCE_TIMEOUT_SECONDS
 
 
 BILIBILI_SEARCH_API = "https://api.bilibili.com/x/web-interface/search/type"
@@ -179,7 +179,7 @@ def _fallback_search_record(keyword: str, reason: str) -> dict:
 
 
 def _strip_html(value: str) -> str:
-    return value.replace("<em class=\"keyword\">", "").replace("</em>", "").replace("<em>", "").strip()
+    return value.replace('<em class="keyword">', "").replace("</em>", "").replace("<em>", "").strip()
 
 
 def _first_text(locator, selectors: list[str]) -> str:
