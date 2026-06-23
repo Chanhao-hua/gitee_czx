@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Static + Dynamic + API</p>
+          <h1>游戏导航与攻略聚合平台</h1>
+          <p class="subtitle">网页启动后自动定时爬取三类数据源，并展示热门游戏、B站热度和攻略入口。</p>
+        </div>
+        <button id="refresh-btn" class="ghost-btn" type="button">立即爬取</button>
+      </section>
+
+      <section class="search-panel" aria-label="自动爬取与搜索">
+        <div class="auto-grid">
+          <form id="search-form" class="search-form">
+            <label for="search-input">搜索游戏</label>
+            <div class="search-row">
+              <input id="search-input" name="q" type="search" placeholder="例如：Dota 2、CS2、绝地求生" autocomplete="off" />
+              <button class="primary-btn" type="submit">查找攻略</button>
+            </div>
+          </form>
+          <section class="auto-status" aria-label="自动定时爬取状态">
+            <div class="card-title-row">
+              <strong>自动定时爬取</strong>
+              <span id="scheduler-pill" class="status-pill">检查中</span>
+            </div>
+            <p id="refresh-status" class="status-text">正在读取定时任务状态...</p>
+            <p id="next-run" class="muted small-text"></p>
+          </section>
+        </div>
+      </section>
+
+      <section id="batch-panel" class="metrics-grid"></section>
+      <section id="result-panel" class="result-panel hidden" aria-live="polite"></section>
+      <section class="metrics-grid" id="metrics-grid"></section>
+
+      <section class="section-head">
+        <div>
+          <h2>热门游戏介绍</h2>
+          <p id="generated-at" class="muted"></p>
+        </div>
+        <span class="source-chip">SQLite 实时读取</span>
+      </section>
+      <section id="hot-games" class="game-grid"></section>
+
+      <section class="two-col">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>B站直播热度</h2>
+            <p class="muted">用于判断当前国内内容侧讨论度。</p>
+          </div>
+          <div id="bilibili-list" class="list-stack"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>数据源状态</h2>
+            <p class="muted">展示最近一次自动或手动爬取结果。</p>
+          </div>
+          <div id="source-runs" class="list-stack"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
